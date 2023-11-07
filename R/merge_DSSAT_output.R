@@ -1,22 +1,16 @@
-#' @param country country name
-#' @param useCaseName use case name  name
-#' @param Crop the name of the crop to be used in creating file name to write out the result.
-#'
-#' @return merge results from DSSAT in RDS format
-#'
-#' @examples merge_DSSAT_output(country="Rwanda", useCaseName="RAB",Crop="Maize")
-merge_DSSAT_output <- function(country, useCaseName,Crop, AOI=FALSE,season=NULL){
+
+merge_DSSAT_output <- function(country, useCaseName,Crop, AOI=FALSE,season=NULL) {
   
   # Set number of parallel workers
   #cls <- parallel::makePSOCKcluster(jobs)
   #doParallel::registerDoParallel(cls)
-  if (AOI==TRUE){
-    if(is.null(season)){
+  if (AOI) {
+    if (is.null(season)) {
       print("with AOI=TRUE, season can not be null, please refer to the documentation and provide season number")
       return(NULL)
     }
     path.to.extdata <- paste("/home/jovyan/agwise-potentialyield/dataops/potentialyield/Data/useCase_", country, "_",useCaseName, "/", Crop, "/transform/DSSAT/AOI", sep="")
-  }else{
+  } else {
     path.to.extdata <- paste("/home/jovyan/agwise-potentialyield/dataops/potentialyield/Data/useCase_", country, "_",useCaseName, "/", Crop, "/transform/DSSAT", sep="")
   }
   setwd(path.to.extdata)
@@ -25,11 +19,11 @@ merge_DSSAT_output <- function(country, useCaseName,Crop, AOI=FALSE,season=NULL)
   lf <- list.files()
   
   f_all <- NULL
-  for (i in 1:length(lf)){
+  for (i in 1:length(lf)) {
     
     base <- lf[i]
 
-    if(file.exists(paste0(base,"/", base, ".OUT"))==TRUE){
+    if (file.exists(paste0(base,"/", base, ".OUT"))) {
       a <- read_output(paste0(base,"/", base, ".OUT"))
       d <- a[,c("XLAT","LONG","TRNO","TNAM","PDAT", "HDAT","CWAM","HWAH","CNAM","GNAM","NDCH","TMAXA",
                   "TMINA","SRADA","PRCP","ETCP","ESCP")]
@@ -50,12 +44,10 @@ merge_DSSAT_output <- function(country, useCaseName,Crop, AOI=FALSE,season=NULL)
     
     
   } 
-  if (AOI==TRUE){
+  if (AOI) {
     saveRDS(f_all, file = paste0("/home/jovyan/agwise-potentialyield/dataops/potentialyield/Data/useCase_", country, "_",useCaseName, "/", Crop, "/result/DSSAT/AOI/useCase_", country, "_",useCaseName, "_", Crop,"_AOI_season_",season,".rds"))
-  }else{
-    saveRDS(f_all, file = paste0("/home/jovyan/agwise-potentialyield/dataops/potentialyield/Data/useCase_", country, "_",useCaseName, "/", Crop, "/result/DSSAT/useCase_", country, "_",useCaseName, "_", Crop,".rds"))
-    
+  } else {
+    saveRDS(f_all, file = paste0("/home/jovyan/agwise-potentialyield/dataops/potentialyield/Data/useCase_", country, "_",useCaseName, "/", Crop, "/result/DSSAT/useCase_", country, "_",useCaseName, "_", Crop,".rds")) 
   }
-  
-  
 }
+

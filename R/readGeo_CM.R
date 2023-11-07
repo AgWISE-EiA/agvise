@@ -1,14 +1,4 @@
 ##### Equations from apsimx package 
-#' @description Texture triangle as equations
-#' @details It requires the silt and clay percentages to define the texture class
-#
-#' Title getting the texture class 
-#'
-#' @param usda_clay percentage of clay (as index or /100)
-#' @param usda_silt percentage of silt (as index or /100)
-#' @return class (texture class)
-#' @examples texture_class(clay,silt)
-#' 
 
 texture_class <- function (usda_clay, usda_silt) {
   
@@ -46,11 +36,7 @@ texture_class <- function (usda_clay, usda_silt) {
 	return( class )
 }
 
-#' Evaporation limit function from Ritchie et al. (1989); cited in Allen et al. (2005)
-#' @param clay1 Clay percentage for the top soil horizon
-#' @param sand1 Sand percentage for the top soil horizon
-#' @keywords internal
-#' @export 
+# Evaporation limit function from Ritchie et al. (1989); cited in Allen et al. (2005)
 
 slu1 <- function(clay1,sand1) {
 	ifelse(sand1>=80, (20-0.15*sand1), 
@@ -58,35 +44,18 @@ slu1 <- function(clay1,sand1) {
 }
 
 
-#' Function that creates the soil and weather file for one location/folder
-#'
-#' @param i last digits of the folder (folder ID)
-#' @param country country name
-#' @param path.to.extdata working directory to save the weather and soil data in DSSAT format
-#' @param path.to.temdata directory with template weather and soil data in DSSAT format
-#' @param Tmaxdata dataframe with the maximum data for all the locations
-#' @param Tmindata dataframe with the minimum temperature data for all the locations
-#' @param Sraddata dataframe with the solar radiation data for all the locations
-#' @param Rainfalldata dataframe with the rainfall data for all the locations
-#' @param RelativeHum dataframe with the relative humidity data for all the locations
-#' @param coords dataframe with the locations and metadata
-#' @param Soil dataframe with the soil data information
-#' @param AOI True if the data is required for target area, and false if it is for trial sites
-#' @return soil and weather file in DSSAT format
-#' @export
-#'
-#' @examples process_grid_element(1)
+# Function that creates the soil and weather file for one location/folder
 
 process_grid_element <- function(i,country,path.to.extdata,path.to.temdata,Tmaxdata,Tmindata,Sraddata,Rainfalldata,RelativeHum,coords,Soil,AOI) {
 
-	if (AOI){
-		if (!dir.exists(file.path(paste(path.to.extdata,"AOI",paste0('EXTE', formatC(width = 4, (as.integer(i)), flag = "0")), sep = "/")))){
+	if (AOI) {
+		if (!dir.exists(file.path(paste(path.to.extdata,"AOI",paste0('EXTE', formatC(width = 4, (as.integer(i)), flag = "0")), sep = "/")))) {
 			dir.create(file.path(paste(path.to.extdata,"AOI",paste0('EXTE', formatC(width = 4, (as.integer(i)), flag = "0")), sep = "/")), recursive = TRUE)
 		}
 		setwd(paste(path.to.extdata,"AOI",paste0('EXTE', formatC(width = 4, (as.integer(i)), flag = "0")), sep = "/"))
 		
 	} else {
-		if (!dir.exists(file.path(paste(path.to.extdata,paste0('EXTE', formatC(width = 4, (as.integer(i)), flag = "0")), sep = "/")))){
+		if (!dir.exists(file.path(paste(path.to.extdata,paste0('EXTE', formatC(width = 4, (as.integer(i)), flag = "0")), sep = "/")))) {
 			dir.create(file.path(paste(path.to.extdata,paste0('EXTE', formatC(width = 4, (as.integer(i)), flag = "0")), sep = "/")), recursive = TRUE)
 		}
 		setwd(paste(path.to.extdata,paste0('EXTE', formatC(width = 4, (as.integer(i)), flag = "0")), sep = "/"))
@@ -98,7 +67,7 @@ process_grid_element <- function(i,country,path.to.extdata,path.to.temdata,Tmaxd
 	RelativeHum <- RelativeHum[RelativeHum$longitude==coords$longitude[i] & RelativeHum$latitude==coords$latitude[i],] 
 
 	
-	if (AOI == TRUE){
+	if (AOI) {
 		Rainfalldata <- pivot_longer(Rainfalldata, 
 			 cols=-1:-7,
 			 names_to = c("Variable", "Date"),	
@@ -175,17 +144,17 @@ process_grid_element <- function(i,country,path.to.extdata,path.to.temdata,Tmaxd
 	tst	<- mutate(tst , across(c(TMAX,TMIN,SRAD,RAIN,RHUM), as.numeric))
 	
 	# Calculate long-term average temperature (TAV)
-	tav <- tst %>%
+	tav <- tst |>
 		dplyr::summarise(TAV=mean((TMAX+TMIN)/2,na.rm=T))
 	
 	# Calculate monthly temperature amplitude (AMP)
-	amp <- tst %>%
+	amp <- tst |>
 		# Extract month from DATE column
-		mutate(month = lubridate::month(as.Date(tst$DATE,format = "%y%j"))) %>%
+		mutate(month = lubridate::month(as.Date(tst$DATE,format = "%y%j"))) |>
 		# Group data by month
-		group_by(month) %>%
+		group_by(month) |>
 		# Calculate monthly means
-		dplyr::summarise(monthly_avg = mean((TMAX+TMIN)/2,na.rm=T)) %>%
+		dplyr::summarise(monthly_avg = mean((TMAX+TMIN)/2,na.rm=T)) |>
 		# Calculate AMP as half the difference between minimum and
 		#		 maximum monthly temperature
 		dplyr::summarise(AMP = (max(monthly_avg, na.rm=T)-min(monthly_avg,na.rm=T))/2)
@@ -260,7 +229,7 @@ process_grid_element <- function(i,country,path.to.extdata,path.to.temdata,Tmaxd
 	ex_profile <- suppressWarnings(DSSAT::read_sol(paste(path.to.temdata, "soil.sol", sep="/"), id_soil = "IBPN910025"))
 	
 	
-	soilid <- ex_profile %>%
+	soilid <- ex_profile |>
 		mutate(PEDON=paste0('TRAN', formatC(width = 5, (as.integer(i)), flag = "0")),
 					 SOURCE = "ISRIC V2",
 					 TEXTURE = texture_soil,
@@ -291,22 +260,12 @@ process_grid_element <- function(i,country,path.to.extdata,path.to.temdata,Tmaxd
 	DSSAT::write_sol(soilid, 'SOIL.SOL', append = FALSE)
 }
 
-#' Reading the weather and soil data for crop model and transforming it to DSSAT format 
-#'
-#' @param country country name
-#' @param useCaseName use case name	name
-#' @param Crop the name of the crop to be used in creating file name to write out the result.
-#' @param AOI True if the data is required for target area, and false if it is for trial sites
-#' @param season when data is needed for more than one season, this needs to be provided to be used in the file name
+#Reading the weather and soil data for crop model and transforming it to DSSAT format 
 
-#' @return weather and soil data in DSSAT format
-#' @export
-#'
-#' @examples readGeo_CM(country = "Rwanda",	useCaseName = "RAB", Crop = "Maize", AOI = FALSE, season=1)
-readGeo_CM <- function(country, useCaseName, Crop, AOI = FALSE, season=1){
+readGeo_CM <- function(country, useCaseName, Crop, AOI = FALSE, season=1) {
 	
 	pathIn <- paste("~/agwise-potentialyield/dataops/potentialyield/Data/useCase_", country, "_", useCaseName,"/", Crop, "/raw/geo_4cropModel/", sep="")
-	if (AOI == TRUE){
+	if (AOI) {
 		Rainfall <- readRDS(paste(pathIn, "Rainfall_Season_", season, "_PointData_AOI.RDS", sep=""))
 		SolarRadiation <- readRDS(paste(pathIn, "solarRadiation_Season_", season, "_PointData_AOI.RDS", sep=""))
 		TemperatureMax <- readRDS(paste(pathIn, "temperatureMax_Season_", season, "_PointData_AOI.RDS", sep=""))
@@ -325,7 +284,7 @@ readGeo_CM <- function(country, useCaseName, Crop, AOI = FALSE, season=1){
 	names(Soil)[names(Soil)=="lon"] <- "longitude"
 	Soil <- na.omit(Soil)
 	
-	if (AOI == TRUE){
+	if (AOI) {
 		metaDataWeather <- as.data.frame(Rainfall[,1:7])
 	} else {
 		metaDataWeather <- as.data.frame(Rainfall[,1:11])
@@ -359,13 +318,13 @@ readGeo_CM <- function(country, useCaseName, Crop, AOI = FALSE, season=1){
 	
 	
 	
-	if (!dir.exists(path.to.extdata)){
+	if (!dir.exists(path.to.extdata)) {
 		dir.create(file.path(path.to.extdata), recursive = TRUE)
 	}
 	setwd(path.to.extdata)
 	
 
-	if (AOI){
+	if (AOI) {
 		coords <- unique(metaData[,c("longitude","latitude")])
 	} else {
 		coords <- metaData
